@@ -55,3 +55,4 @@ excluded	android/lineage-24/tools/verify-initramfs.py	verifier
 excluded	android/lineage-24/tools/verify-lineage-recovery.py	verifier
 excluded	android/lineage-24/tools/verify-mesa-venus-source.py	verifier
 excluded	android/lineage-24/tools/verify-target-files.py	verifier
+excluded	android/lineage-24/tools/gapps_policy.py	verifies the optional external Google payload and source identity

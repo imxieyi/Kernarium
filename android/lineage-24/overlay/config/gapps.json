@@ -1,0 +1,7 @@
+{
+  "name": "MindTheGapps",
+  "android_version": 17,
+  "architecture": "arm64",
+  "revision": "822ff6a805533792ae43a9c3f2a159222da22a6f",
+  "gms_apex_sha256": "fd56d1e45eb46c9a56253129242231c0d47555e568870ae39c1317ca818efa4c"
+}

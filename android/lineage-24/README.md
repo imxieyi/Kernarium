@@ -74,10 +74,10 @@ UML implementation. `Build.SOC_MANUFACTURER` and `SOC_MODEL` are `Kernarium` and
 - **Applications.** Settings, Trebuchet, Files, Package Installer, the LineageOS
   WebView, LatinIME, ThemePicker and a curated set (gallery, music, calendar,
   calculator, PDF viewer, backup). There is no browser, app store, install
-  restriction, Google or microG. Applications that need absent hardware or
+  restriction, Google or microG in the default build. Applications that need absent hardware or
   LineageOS cloud services are excluded by name in the product makefile, and the
   build and the verifier assert that list.
-- **Signature spoofing.** The image ships no Google or microG software, and
+- **Signature spoofing.** The default image ships no Google or microG software, and
   no guest or iOS interface names Google's services. LineageOS's restricted
   spoofing is on in the `user` build as well as in debuggable ones (route
   `p0007`): only `com.google.android.gms` and `com.android.vending`, signed with
@@ -142,6 +142,23 @@ widget, no second page and no other item. Calendar, Gallery, Music and
 Calculator stay installed and are in the app drawer. The Launcher3 resource
 overlay owns the layouts and the verifier requires them. The launcher reads its
 layout once, so a guest created earlier keeps its home screen.
+
+### Optional Google applications
+
+`build/build-aosp.sh --with-gapps` includes a caller-supplied MindTheGapps
+Android 17 arm64 source checkout at `vendor/gapps` in the Android workspace.
+`overlay/config/gapps.json` pins its revision and the presigned Play services
+APEX. The checkout must be complete and clean; the producer does not fetch it.
+GApps and default builds use separate output directories. The repository carries
+integration code only, not Google's payloads or an image containing them.
+
+The optional image includes Google Setup Wizard, Play services and Play Store.
+Android Switch and its cable-migration feature declaration are excluded because
+the virtual device has no USB service. The target-files verifier rejects either
+one, missing required Google packages, or a changed presigned Play services
+APEX. Upstream signatures are retained; the prebuilt APEX retains its upstream
+filesystem compression. Google setup must be qualified on a fresh guest through
+its normal online flow before accepting a GApps release.
 
 ### Motion sensors
 

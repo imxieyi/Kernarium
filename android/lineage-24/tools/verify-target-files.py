@@ -21,6 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import android_image  # noqa: E402
 import default_wallpaper  # noqa: E402
+import gapps_policy  # noqa: E402
 from release_common import (  # noqa: E402
     BUILD_VARIANTS,
     OTA_CERTIFICATE_ARCHIVES,
@@ -941,6 +942,10 @@ def check_apex_payload_filesystem(
     archive: zipfile.ZipFile, info: zipfile.ZipInfo
 ) -> None:
     """An APEX payload is EROFS compressed as the partitions are, or the prebuilt shim's ext4."""
+    # A presigned external APEX cannot be recompressed without breaking its signature.
+    if info.filename == gapps_policy.GMS_APEX:
+        gapps_policy.verify_apex(archive.read(info))
+        return
     try:
         with zipfile.ZipFile(io.BytesIO(archive.read(info))) as apex:
             payload = apex.getinfo("apex_payload.img")
@@ -4218,6 +4223,7 @@ def main() -> None:
             fail(f"required entries are missing: {', '.join(missing)}")
         if apex_count == 0:
             fail("target files do not contain an APEX payload")
+        gapps_policy.verify_target_files(archive)
         check_app_dexpreopt(seen)
         check_hardware_features(archive, infos)
         check_motion_sensors(archive, infos)

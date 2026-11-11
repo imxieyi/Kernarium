@@ -21,6 +21,7 @@ OUT_DIR=
 KERNEL_ARTIFACT=
 JOBS=
 BUILD_NUMBER_VALUE=
+WITH_GAPPS=false
 
 # shellcheck disable=SC1090
 source "$SCRIPT_DIR/common.sh"
@@ -31,7 +32,7 @@ usage()
 Usage: android/lineage-24/build/build-aosp.sh \
        --aosp-source ABSOLUTE_PATH \
        --out ABSOLUTE_PATH \
-       --kernel-artifact ABSOLUTE_PATH [--jobs N] [--build-number N]
+       --kernel-artifact ABSOLUTE_PATH [--jobs N] [--build-number N] [--with-gapps]
 
 Run locally on the x86_64 Linux builder after applying the routed AOSP patch
 series. The kernel is a published Android kernel artifact of the tracked
@@ -47,6 +48,10 @@ ro.build.version.incremental and the number of its fingerprint. A release
 carries its own number: it is how a data partition tells a newer system from
 an older one, so numbers rise from release to release. A build without one
 keeps AOSP's eng.<user> and cannot be published.
+
+--with-gapps includes the pinned, caller-supplied MindTheGapps checkout at
+vendor/gapps. It must be complete and clean. No payload is downloaded by this
+command. Use a separate output directory for this flavor.
 EOF
 }
 
@@ -96,6 +101,10 @@ while [[ $# -gt 0 ]]; do
 		[[ $# -ge 2 ]] || fail "--kernel-artifact requires a path"
 		KERNEL_ARTIFACT=$2
 		shift 2
+		;;
+	--with-gapps)
+		WITH_GAPPS=true
+		shift
 		;;
 	--jobs)
 		[[ $# -ge 2 ]] || fail "--jobs requires a positive integer"
@@ -160,11 +169,24 @@ python3 -B "$KERNEL_ARTIFACT_VERIFIER" --artifact "$KERNEL_ARTIFACT" \
 	--common-root "$KERNEL_COMMON_ROOT" \
 	--kernel-metadata "$OUTER_ROOT/kernel/mainline-6.18/patches/metadata.env" \
 	--abi-metadata "$KERNEL_COMMON_ROOT/abi/identity.env"
+if [[ "$WITH_GAPPS" == true ]]; then
+	python3 -B "$ANDROID_ROOT/tools/gapps_policy.py" --source "$AOSP_SOURCE/vendor/gapps"
+fi
+export ANDARIUM_WITH_GAPPS=$WITH_GAPPS
 SOONG_BUILD_GRAPH="$OUT_DIR/soong/build.${LINEAGE24_PRODUCT}.ninja"
 mkdir -p -- "$OUT_DIR"
 # One output directory per build variant: a switch between user and userdebug is
 # then incremental, where reusing one directory would rebuild everything. The
 # directory records the variant it was first used for and refuses the other.
+GAPPS_MARK=$OUT_DIR/.lineage24-with-gapps
+if [[ -f "$GAPPS_MARK" ]]; then
+	[[ "$(<"$GAPPS_MARK")" == "$WITH_GAPPS" ]] ||
+		fail "use separate output directories for builds with and without GApps"
+elif [[ -f "$SOONG_BUILD_GRAPH" && "$WITH_GAPPS" == true ]]; then
+	fail "use a fresh output directory for the first GApps build"
+else
+	printf '%s\n' "$WITH_GAPPS" >"$GAPPS_MARK"
+fi
 VARIANT_MARK=$OUT_DIR/.lineage24-build-variant
 if [[ -f "$VARIANT_MARK" ]]; then
 	[[ "$(<"$VARIANT_MARK")" == "$LINEAGE24_BUILD_VARIANT" ]] ||

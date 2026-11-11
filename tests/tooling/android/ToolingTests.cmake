@@ -134,3 +134,10 @@ uml_add_tooling_test(
         ${PROJECT_SOURCE_DIR}/tests/tooling/android/test_microg_probe.py
     LABELS android
     TIMEOUT 60)
+
+uml_add_tooling_test(
+    NAME lineage24-gapps-policy
+    COMMAND ${Python3_EXECUTABLE} -B
+        ${PROJECT_SOURCE_DIR}/tests/tooling/android/test_gapps_policy.py
+    LABELS android;audit
+    TIMEOUT 30)

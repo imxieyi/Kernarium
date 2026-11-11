@@ -550,6 +550,18 @@ PRODUCT_VENDOR_PROPERTIES += \
     ro.vendor.v4l2_codec2.decode_concurrent_instances=4 \
     ro.vendor.v4l2_codec2.video_decode_pixel_rate=456192000
 
+# The optional local MindTheGapps input keeps its upstream signatures. The
+# build entry point verifies its revision before evaluating this product.
+ifeq ($(ANDARIUM_WITH_GAPPS),true)
+PRODUCT_SOONG_NAMESPACES += vendor/gapps/arm64 vendor/gapps/common
+$(call inherit-product, vendor/gapps/arm64/arm64-vendor.mk)
+# Android Switch assumes UsbManager exists even on devices without USB.
+# Do not advertise cable migration when neither the hardware nor app exists.
+PRODUCT_PACKAGES_EXCLUDE += GoogleRestore d2d_cable_migration_feature.xml
+PRODUCT_COPY_FILES += \
+    device/kernarium/andarium/config/gapps.json:$(TARGET_COPY_OUT_PRODUCT)/etc/andarium-gapps.json
+endif
+
 PRODUCT_PACKAGE_OVERLAYS += device/kernarium/andarium/overlay
 
 # The virtio-gpu device paces the display with a vblank timer, so a present
