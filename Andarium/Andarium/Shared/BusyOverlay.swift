@@ -27,6 +27,13 @@ struct BusyOverlay: View {
         .transition(.opacity)
         .animation(.easeInOut(duration: 0.2), value: state.cancel != nil)
         .accessibilityElement(children: .contain)
+        // Nothing behind the card can be reached while it is up.
+        .accessibilityAddTraits(.isModal)
+        .onAppear { VoiceOver.screenChanged(state.title) }
+        .onChange(of: state.result != nil) { _, ended in
+            // How it ended, in place of what it was doing.
+            if ended { VoiceOver.screenChanged("\(state.title). \(state.detail)") }
+        }
     }
 
     @ViewBuilder
@@ -34,6 +41,7 @@ struct BusyOverlay: View {
         HStack(alignment: .firstTextBaseline) {
             Text(state.title)
                 .font(.title3.weight(.bold))
+                .accessibilityAddTraits(.isHeader)
             Spacer()
             if let progress = state.progress {
                 Text("\(Int((progress * 100).rounded()))%")
@@ -41,9 +49,11 @@ struct BusyOverlay: View {
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
                     .contentTransition(.numericText())
+                    // The bar says it.
+                    .accessibilityHidden(true)
             }
         }
-        ProgressBar(value: state.progress ?? 0)
+        ProgressBar(value: state.progress ?? 0, label: state.title)
         Text(state.detail)
             .font(.subheadline)
             .foregroundStyle(.secondary)
@@ -65,6 +75,7 @@ struct BusyOverlay: View {
                 .accessibilityHidden(true)
             Text(state.title)
                 .font(.title3.weight(.bold))
+                .accessibilityAddTraits(.isHeader)
         }
         Text(state.detail)
             .font(.subheadline)

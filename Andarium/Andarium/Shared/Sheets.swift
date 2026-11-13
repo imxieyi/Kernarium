@@ -144,6 +144,7 @@ struct InfoSheet: View {
                         }
                     }
                     .padding(.vertical, 6)
+                    .accessibilityElement(children: .combine)
                     if !model.whatsNew.releases.isEmpty {
                         NavigationLink(value: InfoPage.whatsNew) {
                             HStack(spacing: 12) {

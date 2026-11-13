@@ -1,0 +1,40 @@
+// SPDX-License-Identifier: Apache-2.0
+//
+// Copyright 2026 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+// TalkBack, Android's screen reader, and eSpeak NG, the voice it speaks with.
+// The APKs are the accessibility artifact that build-aosp.sh stages as the
+// filegroups of vendor/kernarium/accessibility
+// (tools/stage-accessibility-artifact.py); they arrive unsigned, and the build
+// and the release signing sign them as any application of the image.
+
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+android_app_import {
+    name: "TalkBack",
+    apk: ":kernarium_accessibility_talkback",
+    default_dev_cert: true,
+    product_specific: true,
+}
+
+android_app_import {
+    name: "eSpeakNG",
+    apk: ":kernarium_accessibility_espeak_ng",
+    default_dev_cert: true,
+    product_specific: true,
+}

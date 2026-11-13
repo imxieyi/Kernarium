@@ -1688,6 +1688,25 @@ def check_easter_egg(infos: dict[str, zipfile.ZipInfo]) -> None:
         )
 
 
+# TalkBack and eSpeak NG, the accessibility artifact's APKs: Andarium's Settings
+# turns TalkBack on and off, and eSpeak NG is the only speech engine it can speak
+# with (overlay/accessibility/Android.bp).
+ACCESSIBILITY_APKS = {
+    "TalkBack": re.compile(r"PRODUCT/app/TalkBack/TalkBack\.apk"),
+    "eSpeakNG": re.compile(r"PRODUCT/app/eSpeakNG/eSpeakNG\.apk"),
+}
+
+
+def check_accessibility(infos: dict[str, zipfile.ZipInfo]) -> None:
+    """TalkBack and the voice it speaks with are in the image."""
+    for module, pattern in ACCESSIBILITY_APKS.items():
+        if not any(pattern.fullmatch(name) for name in infos):
+            fail(
+                f"{module}.apk is missing from the image: the accessibility artifact supplies TalkBack "
+                "and eSpeak NG (build-aosp.sh --accessibility-artifact)"
+            )
+
+
 def check_navigation_mode(archive: zipfile.ZipFile, infos: dict[str, zipfile.ZipInfo]) -> None:
     """The wizard leaves the navigation mode alone, and both modes stay available."""
     info = infos.get(SETUP_WIZARD_APK)
@@ -4227,6 +4246,7 @@ def main() -> None:
         check_setup_wizard_branding(archive, infos)
         check_navigation_mode(archive, infos)
         check_easter_egg(infos)
+        check_accessibility(infos)
         check_launcher_workspace(archive, infos)
         check_network_time(archive, infos)
         check_flip_to_screen_off(archive, infos)

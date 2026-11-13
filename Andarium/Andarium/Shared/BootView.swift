@@ -46,6 +46,11 @@ struct BootView: View {
         .background { backdrop }
         .environment(\.colorScheme, dimmed ? .dark : colorScheme)
         .statusBarHidden(true)
+        .onChange(of: min(current, steps.count - 1)) { _, active in
+            // VoiceOver hears each step as it starts, after what it is saying.
+            guard current < steps.count else { return }
+            VoiceOver.announce(steps[active].title, queued: true)
+        }
         .task(id: kind) {
             guard frozen == nil else { return }
             if model.driver != nil {
@@ -123,8 +128,11 @@ struct BootView: View {
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
                     .contentTransition(.numericText())
+                    .accessibilityLabel(Self.spokenElapsed(frozen ? model.frozenElapsed : Int(timeline.date.timeIntervalSince(startedAt))))
             }
         }
+        // What is starting and how long it has taken, read as one.
+        .accessibilityElement(children: .combine)
         .padding(.horizontal, 24)
         .frame(height: 44)
         .frame(maxWidth: 640)
@@ -136,6 +144,7 @@ struct BootView: View {
             Text(kind == .recovery ? "Recovery" : "Andarium")
                 .font(.largeTitle.weight(.bold))
                 .padding(.horizontal, 4)
+                .accessibilityAddTraits(.isHeader)
 
             VStack(spacing: 0) {
                 ForEach(Array(steps.enumerated()), id: \.offset) { index, step in
@@ -155,6 +164,7 @@ struct BootView: View {
                 } icon: {
                     Image(systemName: Self.noteSymbol(kind))
                         .foregroundStyle(Color.accentColor)
+                        .accessibilityHidden(true)
                 }
                 .padding(16)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -203,6 +213,7 @@ struct BootView: View {
             }
             .font(.title3)
             .frame(width: 24, height: 24)
+            .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text(step.title)
                     .font(.body.weight(.semibold))
@@ -217,6 +228,23 @@ struct BootView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
+        // The step, its detail and how far it is, read as one; the mark
+        // that shows how far says it in words.
+        .accessibilityElement(children: .combine)
+        .accessibilityValue(Self.spokenState(state))
+    }
+
+    private static func spokenState(_ state: StepState) -> String {
+        switch state {
+        case .done: "Done"
+        case .active: "In progress"
+        case .pending: "Waiting"
+        }
+    }
+
+    /// "1 minute 5 seconds" for the elapsed time "1:05".
+    static func spokenElapsed(_ seconds: Int) -> String {
+        Duration.seconds(max(seconds, 0)).formatted(.units(allowed: [.hours, .minutes, .seconds], width: .wide))
     }
 
     // MARK: Content per kind
@@ -301,6 +329,8 @@ private struct BootPanel: ViewModifier {
 struct ProgressBar: View {
     let value: Double
     var height: CGFloat = 8
+    /// What VoiceOver calls the bar: what is in progress.
+    var label = "Progress"
 
     var body: some View {
         GeometryReader { geo in
@@ -314,21 +344,23 @@ struct ProgressBar: View {
         .frame(height: height)
         .animation(.snappy, value: value)
         .accessibilityElement()
-        .accessibilityLabel("Progress")
+        .accessibilityLabel(label)
         .accessibilityValue("\(Int((value * 100).rounded())) percent")
+        .accessibilityAddTraits(.updatesFrequently)
     }
 }
 
-/// The live dot on the status line.
+/// The live dot on the status line. With Reduce Motion it holds still.
 struct PulsingDot: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var dim = false
 
     var body: some View {
         Circle()
             .fill(Color.accentColor)
             .frame(width: 8, height: 8)
-            .opacity(dim ? 0.35 : 1)
-            .animation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true), value: dim)
+            .opacity(dim && !reduceMotion ? 0.35 : 1)
+            .animation(reduceMotion ? nil : .easeInOut(duration: 0.9).repeatForever(autoreverses: true), value: dim)
             .onAppear { dim = true }
             .accessibilityHidden(true)
     }

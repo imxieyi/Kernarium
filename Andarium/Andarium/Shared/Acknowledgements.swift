@@ -157,6 +157,7 @@ struct LicenseView: View {
                         VStack(alignment: .leading, spacing: 10) {
                             if let title = block.title {
                                 Text(title).font(.headline)
+                                    .accessibilityAddTraits(.isHeader)
                             }
                             ForEach(Array(paragraphs(block.text).enumerated()), id: \.offset) { _, paragraph in
                                 Text(verbatim: paragraph)
@@ -197,6 +198,7 @@ struct LicenseView: View {
             Text(value)
                 .font(.subheadline)
         }
+        .accessibilityElement(children: .combine)
     }
 
     private func paragraphs(_ text: String) -> [String] {

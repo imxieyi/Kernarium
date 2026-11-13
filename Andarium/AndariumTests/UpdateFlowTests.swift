@@ -128,6 +128,28 @@ final class StubDriver: RuntimeDriver {
         try await install(update)
     }
 
+    /// TalkBack as the stub plays it: what the guest reports, nil while it
+    /// cannot be asked, and the calls the model made. The system carries
+    /// TalkBack, off.
+    var screenReaderState: ScreenReaderState? = ScreenReaderState(
+        installedService: ScreenReader.services[0], enabledServices: [])
+    var screenReaderError: Error?
+    private(set) var screenReaderReads = 0
+    private(set) var screenReaderChanges: [Bool] = []
+    private(set) var accessibilitySettingsOpened = 0
+    func readScreenReader() async -> ScreenReaderState? {
+        screenReaderReads += 1
+        return screenReaderState
+    }
+    func setScreenReader(_ on: Bool, in state: ScreenReaderState) async throws -> ScreenReaderState {
+        screenReaderChanges.append(on)
+        if let screenReaderError { throw screenReaderError }
+        let after = ScreenReader.state(afterTurningOn: on, state)
+        screenReaderState = after
+        return after
+    }
+    func openAccessibilitySettings() async throws { accessibilitySettingsOpened += 1 }
+
     /// What the resume of a guest paused for space answers, and what Shut
     /// down does; a test sets them as the runtime would behave.
     var resumeAnswers = true

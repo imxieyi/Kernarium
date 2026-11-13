@@ -79,6 +79,19 @@ struct RootView: View {
     @Environment(AppModel.self) private var model
     let entry: AppEntry
 
+    /// What VoiceOver says as a run begins; other screens speak for
+    /// themselves from their first element.
+    static func spoken(_ phase: Phase) -> String? {
+        switch phase {
+        case .running(.normal):
+            "Android is running. The side keys on the screen edge have Back, Home and Settings, where TalkBack is."
+        case .running(.recovery):
+            "Recovery is running. The side keys\u{2019} volume keys move, and Power chooses."
+        case .home, .booting, .failed:
+            nil
+        }
+    }
+
     var body: some View {
         @Bindable var model = model
         ZStack {
@@ -114,6 +127,11 @@ struct RootView: View {
         // Toggles take the jade accent too, not the system green.
         .tint(Color.accentColor)
         .animation(.easeInOut(duration: 0.4), value: model.phase)
+        // A new screen replaces the old one under VoiceOver's cursor: it
+        // starts again at the top, and hears what the run now is.
+        .onChange(of: model.phase) { _, phase in
+            VoiceOver.screenChanged(Self.spoken(phase))
+        }
         .animation(.easeInOut(duration: 0.2), value: model.busy != nil)
         .animation(.easeInOut(duration: 0.2), value: model.spacePause != nil)
         .alert(

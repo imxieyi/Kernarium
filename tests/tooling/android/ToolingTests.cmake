@@ -72,6 +72,15 @@ uml_add_tooling_test(
     LABELS android;audit
     TIMEOUT 30)
 
+# The accessibility artifact is staged only when its files match its
+# description, as the filegroups the product imports.
+uml_add_tooling_test(
+    NAME lineage24-accessibility-artifact
+    COMMAND ${Python3_EXECUTABLE} -B
+        ${PROJECT_SOURCE_DIR}/tests/tooling/android/test_stage_accessibility_artifact.py
+    LABELS android
+    TIMEOUT 60)
+
 # The list of paths that decide a release names every producer, and the object
 # IDs it yields do not depend on history.
 uml_add_tooling_test(

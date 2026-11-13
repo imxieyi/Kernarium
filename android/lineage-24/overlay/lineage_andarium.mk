@@ -341,6 +341,13 @@ PRODUCT_PACKAGES_EXCLUDE += \
     metrics_helper \
     sleep
 
+# TalkBack, Android's screen reader, and eSpeak NG, its voice: the image's
+# only speech engine. Both are prebuilt APKs of the accessibility artifact
+# (accessibility/Android.bp).
+PRODUCT_PACKAGES += \
+    TalkBack \
+    eSpeakNG
+
 # The keyboard (LatinIME) and ThemePicker come from the LineageOS product
 # chain. resize2fs grows the compact userdata filesystem
 # online after the host expands its partition, once /data is mounted

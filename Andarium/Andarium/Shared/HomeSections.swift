@@ -16,6 +16,7 @@ struct HomeSection<Content: View, Footer: View>: View {
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.secondary)
                 .padding(.leading, 18)
+                .accessibilityAddTraits(.isHeader)
             VStack(spacing: 0) { content }
                 .glassEffect(.regular, in: .rect(cornerRadius: 26))
             footer
@@ -45,7 +46,8 @@ struct SectionNote: View {
 }
 
 /// One row of a section: the icon tile, the title (and a line under it) and
-/// the control on the right.
+/// the control on the right. VoiceOver reads the row as its control, which
+/// carries the title as its label, followed by the line under it.
 struct OptionRow<Control: View>: View {
     let title: String
     let symbol: String
@@ -63,6 +65,8 @@ struct OptionRow<Control: View>: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
                     .opacity(dimmed ? 0.55 : 1)
+                    // The control's own label says it.
+                    .accessibilityHidden(true)
                 if let detail {
                     Text(detail)
                         .font(.footnote)
@@ -77,6 +81,7 @@ struct OptionRow<Control: View>: View {
         .padding(.horizontal, 16)
         .padding(.vertical, detail == nil ? 0 : 6)
         .frame(minHeight: 54)
+        .accessibilityElement(children: .combine)
     }
 }
 

@@ -17,6 +17,7 @@ Andarium/Live/        the runtime, storage and session of the device app
 AndariumCore/         Swift package: the model and the adb client, no UIKit; it
                       re-exports GuestHostCore (../GuestHost/Core)
 AndariumTests/        hosted tests of the device app
+AndariumPreviewUITests/ UI tests of the Simulator preview
 Config/               entitlements, Info.plist, privacy manifest, bridging header
 scripts/              system staging, the App Store bundle check,
                       acknowledgements, screen capture
@@ -53,6 +54,9 @@ or state directly, and `scripts/capture-screens.py` (`--help`) captures them:
 xcodebuild -project Andarium/Andarium.xcodeproj -scheme AndariumPreview \
     -destination 'platform=iOS Simulator,name=iPad Pro 11-inch (M5)' build
 ```
+
+`AndariumPreviewUITests` drives the preview through those arguments; the
+scheme's `test` action runs it.
 
 ## Devices
 
@@ -264,6 +268,13 @@ requires reopening Andarium.
   Beside the closed keys their tip, while it shows, takes touches on its card
   alone (on a Mac, where an iPad app's popover keeps its dimming view, every
   touch), and it goes with the closed keys when they open or the session ends.
+- **VoiceOver.** Every screen is usable with VoiceOver: a new screen, the start
+  of a run and how an operation ended are announced (`VoiceOver`), the busy and
+  low-space screens are modal, and the closed side keys carry actions that move
+  them. Android's display is one element
+  (`GuestDisplayAccessibility`); while TalkBack is on in the guest it is a
+  direct-touch area, so touches reach Android and TalkBack speaks instead of
+  VoiceOver.
 - **Retina.** Retina mode applies at the next start and uses the screen's
   native pixels, whose host allocations count against the same iOS process
   limit as guest RAM (`DisplayOptions`).
@@ -370,6 +381,18 @@ is on. `AndariumCore/Adb` speaks the protocol.
 - **Key.** `AdbKeyStore` keeps one RSA-2048 key per guest in the Keychain, this
   device only and not synchronized. Its public key goes in each boot request
   (`android_adb_public_key`), which adbd authorizes for that boot.
+- **TalkBack.** In a normal session, the Accessibility section of Settings
+  turns Android's screen reader on and off by writing
+  `enabled_accessibility_services` and `accessibility_enabled` through the same
+  adb channel, keeping every other service the guest has on (`ScreenReader`,
+  `Capabilities.screenReader`), and opens Android's Accessibility page. The
+  switch follows what Android reports while Settings is open. The system image
+  carries TalkBack and eSpeak NG
+  ([Android README](../android/lineage-24/README.md#accessibility)); a guest
+  whose system has no TalkBack shows the switch as unavailable. A guest's first
+  start while VoiceOver runs turns TalkBack on by itself
+  (`ScreenReader.turnsOnByItself`), so Android's setup speaks from its first
+  page; later starts leave TalkBack as the person left it.
 - **Create bug report and Install APK** are in every build, in a normal
   session. A bug report is Android's zip with Andarium's session records and
   MetricKit reports added under `andarium/`, the application's container paths

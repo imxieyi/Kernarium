@@ -37,6 +37,7 @@ input	android/lineage-24/tools/release_common.py	derives the manifest's tracked 
 input	android/lineage-24/tools/release_inputs.py	reads this list and records the object IDs
 input	android/lineage-24/tools/render-pin-manifest.py	renders the local manifest that pins the synced source
 input	android/lineage-24/tools/sign_release.py	signs the target files
+input	android/lineage-24/tools/stage-accessibility-artifact.py	stages the TalkBack and eSpeak NG APKs the image carries
 input	android/lineage-24/tools/sync-device-tree.py	copies the overlay into the source tree
 input	android/lineage-24/tools/ubd-disk.py	assembles the system disk
 excluded	android/lineage-24/tools/android_image.py	the image verifiers' shared reader

@@ -36,6 +36,9 @@ struct GraphicsNoticeBanner: View {
         .padding(.horizontal, 24)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("graphics-notice")
+        // It appears over the guest unasked; VoiceOver says so without
+        // moving from where the person is.
+        .onAppear { VoiceOver.announce("\(GraphicsNotice.title). \(GraphicsNotice.detail)") }
     }
 }
 

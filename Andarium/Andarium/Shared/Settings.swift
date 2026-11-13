@@ -6,8 +6,9 @@ import UIKit
 import UniformTypeIdentifiers
 
 /// Settings while the guest runs, opened from the side keys. It slides up over
-/// the guest, which keeps running behind it: watch the stats, install an app
-/// from Files, connect a computer with adb and make a bug report. An
+/// the guest, which keeps running behind it: turn TalkBack on and off, watch
+/// the stats, install an app from Files, connect a computer with adb and make
+/// a bug report. An
 /// operation on the guest dismisses Settings and shows the full-screen
 /// progress, and then how it ended.
 struct SessionSettingsSheet: View {
@@ -29,6 +30,8 @@ struct SessionSettingsSheet: View {
         NavigationStack(path: fileRoute) {
             ScrollViewReader { proxy in
                 List {
+                    // First, so VoiceOver reaches TalkBack before anything else.
+                    if normalSession, model.capabilities.screenReader { accessibility(session) }
                     if model.capabilities.statistics { stats(session) }
                     if normalSession, model.capabilities.apkInstall { apps }
                     if normalSession, model.capabilities.guestFiles, model.fileBrowser != nil { files }
@@ -112,6 +115,50 @@ struct SessionSettingsSheet: View {
     private var normalSession: Bool {
         if case .running(.normal) = model.phase { return true }
         return false
+    }
+
+    // MARK: Accessibility
+
+    /// TalkBack, Android's screen reader, and Android's own Accessibility
+    /// page. The switch follows what Android reports, read while Settings is
+    /// open (`AppModel.watchSettings`).
+    private func accessibility(_ session: SessionState) -> some View {
+        let offer = model.screenReaderOffer
+        return Section {
+            Toggle(isOn: Binding(get: { offer.isOn }, set: { model.setScreenReader($0) })) {
+                HStack(spacing: 12) {
+                    IconTile(symbol: "accessibility", color: offer == .unavailable ? .gray : .accentColor)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(ScreenReaderWords.name)
+                        if let detail = offer.detail {
+                            Text(detail)
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            }
+            .disabled(!offer.canChange || session.screenReaderChanging)
+            .accessibilityIdentifier("settings-talkback")
+            Button {
+                // Android's page opens on the guest's screen, behind the sheet.
+                dismiss()
+                model.openAccessibilitySettings()
+            } label: {
+                HStack(spacing: 12) {
+                    IconTile(symbol: "slider.horizontal.3")
+                    Text(ScreenReaderWords.settings)
+                        .foregroundStyle(Color.accentColor)
+                    Spacer()
+                }
+            }
+            .accessibilityIdentifier("settings-accessibility-settings")
+        } header: {
+            Text(ScreenReaderWords.section)
+        } footer: {
+            Text(offer == .unavailable ? ScreenReaderWords.footerUnavailable : ScreenReaderWords.footer)
+        }
+        .id("accessibility")
     }
 
     // MARK: File browser

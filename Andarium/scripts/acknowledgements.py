@@ -51,6 +51,7 @@ GROUPS = [
     {"id": "system", "title": "Operating system"},
     {"id": "graphics", "title": "Graphics"},
     {"id": "libraries", "title": "Libraries"},
+    {"id": "accessibility", "title": "Accessibility"},
 ]
 
 # Where each license text comes from: (source, path). A source is a directory
@@ -68,6 +69,9 @@ SOURCES = {
     "pcre2": "pcre2",
     "proxy-libintl": "proxy-libintl",
     "zstd": "zstd",
+    "talkback": "talkback",
+    "espeak-ng": "espeak-ng",
+    "sonic": "sonic",
 }
 
 MESA_HOLDERS = (
@@ -387,6 +391,27 @@ def projects(texts: Texts) -> list[dict]:
             frameworks=["LibZstd"],
             components=["zstd-decompression"],
             texts=[own(None, "zstd", "LICENSE")],
+        ),
+        # The screen reader and its voice, which the system image carries
+        # (dependencies/build-andarium-accessibility.sh).
+        entry(
+            id="talkback",
+            group="accessibility",
+            name="TalkBack",
+            copyright="Google LLC; braille: 1995-2024 The BRLTTY Developers, 2004-2006 ViewPlus Technologies, Inc., JJB Software, Inc. and other liblouis contributors",
+            license="Apache License 2.0; its braille libraries BRLTTY and liblouis: GNU LGPL v2.1 or later",
+            spdx="Apache-2.0 AND LGPL-2.1-or-later",
+            licenses=["apache-2.0", "lgpl-2.1"],
+        ),
+        entry(
+            id="espeak-ng",
+            group="accessibility",
+            name="eSpeak NG",
+            copyright="2005-2015 Jonathan Duddington; 2012-2026 Reece H. Dunn; Google Inc. and other eSpeak NG contributors; libsonic: 2010 Bill Cox",
+            license="GNU GPL v3 or later; Apache License 2.0 for parts of the Android app and for libsonic",
+            spdx="GPL-3.0-or-later AND Apache-2.0",
+            licenses=["apache-2.0"],
+            texts=[own("GNU General Public License, Version 3", "espeak-ng", "COPYING")],
         ),
     ]
 

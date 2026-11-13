@@ -72,7 +72,8 @@ UML implementation. `Build.SOC_MANUFACTURER` and `SOC_MODEL` are `Kernarium` and
   are 4 KiB aligned. ABI support does not lower the minimum installable target
   SDK; test an older APK with `adb install --bypass-low-target-sdk-block`.
 - **Applications.** Settings, Trebuchet, Files, Package Installer, the LineageOS
-  WebView, LatinIME, ThemePicker and a curated set (gallery, music, calendar,
+  WebView, LatinIME, ThemePicker, TalkBack and eSpeak NG
+  ([Accessibility](#accessibility)) and a curated set (gallery, music, calendar,
   calculator, PDF viewer, backup). There is no browser, app store, install
   restriction, Google or microG. Applications that need absent hardware or
   LineageOS cloud services are excluded by name in the product makefile, and the
@@ -142,6 +143,21 @@ widget, no second page and no other item. Calendar, Gallery, Music and
 Calculator stay installed and are in the app drawer. The Launcher3 resource
 overlay owns the layouts and the verifier requires them. The launcher reads its
 layout once, so a guest created earlier keeps its home screen.
+
+### Accessibility
+
+The image carries TalkBack, Android's screen reader, and eSpeak NG, its only
+speech engine, as the prebuilt applications `TalkBack` and `eSpeakNG`
+(`overlay/accessibility/Android.bp`, in `/product/app`), off until Andarium's
+Settings or Android's own turns TalkBack on. They are the accessibility
+artifact: the release APKs, unsigned, and `artifact.json`, which
+`dependencies/build-andarium-accessibility.sh` builds offline on the Mac from
+pinned sources ([`../../dependencies/README.md`](../../dependencies/README.md)).
+`build-aosp.sh` requires it (`--accessibility-artifact`), and
+`tools/stage-accessibility-artifact.py` checks it against its description and
+stages it as `vendor/kernarium/accessibility`, outside the synchronized device
+tree; the build and the release signing sign the APKs as any application of
+the image. The target-files verifier requires both.
 
 ### Motion sensors
 

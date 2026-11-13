@@ -16,10 +16,16 @@ struct SideKeyActions {
     var settings: () -> Void
 }
 
+/// Where VoiceOver goes as the keys open and close.
+enum SideKeyFocus: Hashable {
+    case closed, power
+}
+
 /// The side keys on the screen edge: closed they are a pair of slim glass
 /// keys; tapped they swell in place into Power and a volume rocker, with
 /// Settings and a Back and Home pair right beside them as one small group.
-/// They move up and down the edge with a drag and across to the other edge.
+/// They move up and down the edge with a drag and across to the other edge;
+/// VoiceOver moves them with the closed keys' actions.
 ///
 /// Only the keys take touches, and the tip beside the closed keys on its own
 /// card. While they are open, a touch anywhere else reaches the guest as it
@@ -47,6 +53,7 @@ struct SideKeysOverlay: View {
     /// The tip's popover is up: while the closed keys are on screen and the
     /// tip wants to show.
     @State private var tipShown = false
+    @AccessibilityFocusState private var focus: SideKeyFocus?
 
     init(mode: StartMode, lit: Bool, open: Binding<Bool>, leading: Bool = false, actions: SideKeyActions) {
         self.mode = mode
@@ -62,6 +69,13 @@ struct SideKeysOverlay: View {
         }
         .ignoresSafeArea(.keyboard)
         .sensoryFeedback(.impact(weight: .light), trigger: keyPresses)
+        .onChange(of: open) { _, isOpen in
+            guard isOpen else { return }
+            // VoiceOver goes to the first key once the keys have swollen.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                if open { focus = .power }
+            }
+        }
     }
 
     @ViewBuilder
@@ -98,7 +112,10 @@ struct SideKeysOverlay: View {
                         }
                     }
                 }
-                .accessibilityAction(.escape) { setOpen(false) }
+                .accessibilityAction(.escape) {
+                    setOpen(false)
+                    focus = .closed
+                }
                 .position(x: edgeX + inward * (KeyMetrics.edgeGap + groupWidth / 2), y: openY)
             } else {
                 ClosedKeys(space: keysSpace, leading: leading)
@@ -114,6 +131,9 @@ struct SideKeysOverlay: View {
                         for await shows in tip.shouldDisplayUpdates { tipShown = shows }
                     }
                     .onDisappear { tipShown = false }
+                    .accessibilityFocused($focus, equals: .closed)
+                    .accessibilityAction { setOpen(true) }
+                    .accessibilityActions { closedKeysActions }
                     .position(x: edgeX + inward * 18, y: closedY)
                     .gesture(dragKeys(size: size))
                     .onTapGesture { setOpen(true) }
@@ -121,10 +141,25 @@ struct SideKeysOverlay: View {
         }
     }
 
+    /// What VoiceOver can do with the closed keys besides opening them: move
+    /// them as a drag would.
+    @ViewBuilder
+    private var closedKeysActions: some View {
+        Button(leading ? "Move to the right edge" : "Move to the left edge") {
+            withAnimation(.snappy) { leading.toggle() }
+        }
+        if fraction > 0.15 {
+            Button("Move up") { withAnimation(.snappy) { fraction = max(0.1, fraction - 0.15) } }
+        }
+        if fraction < 0.85 {
+            Button("Move down") { withAnimation(.snappy) { fraction = min(0.9, fraction + 0.15) } }
+        }
+    }
+
     private var powerColumn: some View {
         OpenKeys(
             space: keysSpace, recovery: mode == .recovery,
-            lit: lit,
+            lit: lit, focus: $focus,
             power: { pressed(actions.power) }, powerHold: holdPower,
             volumeUp: { pressed(actions.volumeUp) }, volumeDown: { pressed(actions.volumeDown) }
         )
@@ -219,8 +254,9 @@ struct ClosedKeys: View {
         .contentShape(Rectangle())
         .accessibilityElement()
         .accessibilityLabel("Side keys")
-        .accessibilityHint("Opens Power, volume, Back, Home and Settings")
+        .accessibilityHint("Opens Power, volume, Back, Home and Settings. Actions move the keys.")
         .accessibilityAddTraits(.isButton)
+        .accessibilityIdentifier("side-keys")
     }
 
     private func key(height: CGFloat) -> some View {
@@ -238,6 +274,7 @@ struct OpenKeys: View {
     let space: Namespace.ID
     let recovery: Bool
     let lit: Bool
+    var focus: AccessibilityFocusState<SideKeyFocus?>.Binding
     let power: () -> Void
     let powerHold: () -> Void
     let volumeUp: () -> Void
@@ -264,9 +301,12 @@ struct OpenKeys: View {
             .onLongPressGesture(minimumDuration: 0.6, perform: powerHold)
             .accessibilityElement()
             .accessibilityLabel("Power")
-            .accessibilityHint(recovery ? "Chooses the highlighted item" : "Hold for the power menu")
+            .accessibilityHint(recovery ? "Chooses the highlighted item" : "Presses Power. The Power menu action holds it.")
             .accessibilityAddTraits(.isButton)
+            .accessibilityAction { power() }
             .accessibilityAction(named: "Power menu", powerHold)
+            .accessibilityFocused(focus, equals: .power)
+            .accessibilityIdentifier("side-keys-power")
 
             KeyPair(
                 top: (recovery ? "chevron.up" : "plus", recovery ? "Up" : "Volume up", volumeUp),

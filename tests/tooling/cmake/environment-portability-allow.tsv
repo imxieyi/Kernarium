@@ -19,4 +19,4 @@ R2	tests/tooling/network/slirp_forward_probe.cpp	192\.168\.64\.1	fixture for a p
 R3	Kernarium/Kernarium.xcodeproj/project.pbxproj	PRODUCT_BUNDLE_IDENTIFIER = com.imxieyi.Kernarium(?:Tests|UITests|Automation)?;	project signing identity
 R3	Kernarium/Runtime/CMakeLists.txt	MACOSX_FRAMEWORK_IDENTIFIER	project signing identity
 R3	dependencies/apple-static-framework/Info.plist.in	CFBundleIdentifier	project signing identity
-R3	Andarium/Andarium.xcodeproj/project.xcproj	"PRODUCT_BUNDLE_IDENTIFIER": "com.imxieyi.(?:andarium|Andarium(?:Preview|Tests|Automation))"	project signing identity
+R3	Andarium/Andarium.xcodeproj/project.xcproj	"PRODUCT_BUNDLE_IDENTIFIER": "com.imxieyi.(?:andarium|Andarium(?:Preview(?:UITests)?|Tests|Automation))"	project signing identity

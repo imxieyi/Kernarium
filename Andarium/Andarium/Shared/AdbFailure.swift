@@ -9,12 +9,15 @@ nonisolated enum AdbActivity {
     case bugReport
     /// Browsing the guest's files, importing and exporting.
     case files
+    /// Turning TalkBack on or off.
+    case screenReader
 
     fileprivate var notReady: String {
         switch self {
         case .installApp: "install apps"
         case .bugReport: "make a bug report"
         case .files: "open its files"
+        case .screenReader: "change TalkBack"
         }
     }
 
@@ -23,6 +26,7 @@ nonisolated enum AdbActivity {
         case .installApp: "the app was installed"
         case .bugReport: "the bug report was finished"
         case .files: "the transfer finished"
+        case .screenReader: "TalkBack changed"
         }
     }
 
@@ -31,6 +35,7 @@ nonisolated enum AdbActivity {
         case .installApp: "installing the app"
         case .bugReport: "making the bug report"
         case .files: "copying the files"
+        case .screenReader: "changing TalkBack"
         }
     }
 
@@ -39,6 +44,7 @@ nonisolated enum AdbActivity {
         case .installApp: "install the app"
         case .bugReport: "make the bug report"
         case .files: "copy the file"
+        case .screenReader: "change TalkBack"
         }
     }
 }

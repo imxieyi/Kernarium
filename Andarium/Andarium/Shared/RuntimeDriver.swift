@@ -122,6 +122,13 @@ protocol RuntimeDriver: AnyObject {
     /// Whether Android has mounted its internal storage (`InternalStorage`);
     /// nil when it cannot be read now. Android's boot ends before it does.
     func storageReady() async -> Bool?
+    /// TalkBack in the guest; nil when the guest cannot be asked now.
+    func readScreenReader() async -> ScreenReaderState?
+    /// Turns TalkBack on or off in the guest whose state is `state`, keeping
+    /// every other accessibility service; returns the state after.
+    func setScreenReader(_ on: Bool, in state: ScreenReaderState) async throws -> ScreenReaderState
+    /// Opens Android's Accessibility page on the guest's screen.
+    func openAccessibilitySettings() async throws
     /// Opens the listener of ADB over the network on the device's network
     /// addresses. Throws when it cannot (`AdbError.io(EADDRINUSE)` for a
     /// port in use).

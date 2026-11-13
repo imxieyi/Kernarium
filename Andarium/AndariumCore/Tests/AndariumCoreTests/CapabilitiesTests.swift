@@ -10,11 +10,14 @@ struct CapabilitiesTests {
         #expect(device.bugReport && device.apkInstall && device.adbOverNetwork && device.guestFiles)
         // The statistics are the runtime's own readings.
         #expect(device.statistics)
+        // TalkBack goes through the same adb channel.
+        #expect(device.screenReader)
     }
 
     @Test func thePreviewPretendsToDoEverything() {
         let preview = Capabilities.preview
         #expect(preview.bugReport && preview.apkInstall && preview.adbOverNetwork && preview.guestFiles)
         #expect(preview.statistics)
+        #expect(preview.screenReader)
     }
 }

@@ -11,9 +11,23 @@ struct GuestDisplayGeometry {
     let dotsPerInch: UInt32
 }
 
+/// What VoiceOver makes of the guest's display, in the application's words.
+/// With `directTouch`, the display is a direct-touch area: a touch on it
+/// reaches the guest as it does with VoiceOver off, so a screen reader in the
+/// guest takes it. Without it, VoiceOver's own gestures work over the
+/// display, which reads as one element.
+struct GuestDisplayAccessibility: Equatable {
+    var label: String
+    var hint: String?
+    var directTouch = false
+}
+
 struct GuestDisplayView: UIViewControllerRepresentable {
     @Binding var keyboardVisible: Bool
     let retinaMode: Bool
+    /// What VoiceOver makes of the display; nil leaves it out of VoiceOver,
+    /// as while another screen covers it.
+    var accessibility: GuestDisplayAccessibility?
     /// Told each time touches begin on the display, after their contacts have
     /// gone to the guest. An application that draws controls over the display
     /// uses it to put them away when a touch lands on the guest instead.
@@ -32,6 +46,7 @@ struct GuestDisplayView: UIViewControllerRepresentable {
         view.enableSetNeedsDisplay = true
         view.autoResizeDrawable = false
         view.isMultipleTouchEnabled = true
+        view.applyAccessibility(accessibility)
         return GuestDisplayViewController(metalView: view)
     }
 
@@ -42,6 +57,7 @@ struct GuestDisplayView: UIViewControllerRepresentable {
         let view = controller.metalView
         view.touchDidBegin = touchDidBegin
         view.retinaMode = retinaMode
+        view.applyAccessibility(accessibility)
         view.setKeyboardVisible(keyboardVisible)
         view.reportLayout()
     }
@@ -212,6 +228,13 @@ final class GuestMetalView: MTKView, UIKeyInput {
             width: CGFloat(width),
             height: CGFloat(height)
         )
+    }
+
+    func applyAccessibility(_ accessibility: GuestDisplayAccessibility?) {
+        isAccessibilityElement = accessibility != nil
+        accessibilityLabel = accessibility?.label
+        accessibilityHint = accessibility?.hint
+        accessibilityTraits = accessibility?.directTouch == true ? .allowsDirectInteraction : .none
     }
 
     func setKeyboardVisible(_ visible: Bool) {

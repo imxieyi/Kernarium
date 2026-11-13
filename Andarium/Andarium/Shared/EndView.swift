@@ -16,6 +16,7 @@ struct EndView: View {
             Text("The guest stopped unexpectedly")
                 .font(.title2.weight(.bold))
                 .multilineTextAlignment(.center)
+                .accessibilityAddTraits(.isHeader)
             Text("To start it again, close Andarium and open it again.")
                 .font(.body)
                 .foregroundStyle(.secondary)
@@ -44,6 +45,9 @@ struct EndView: View {
             }
             .buttonStyle(.glass)
             .padding(.top, 14)
+            .onChange(of: copied) { _, now in
+                if now { VoiceOver.announce("Report copied") }
+            }
 
             Spacer(minLength: 24)
         }

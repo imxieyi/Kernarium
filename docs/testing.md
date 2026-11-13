@@ -292,7 +292,11 @@ controller or connects a window takes it with `HostWindow.take()`, and none
 opens the system's Settings or another app. The bundle's principal class
 (`AndariumTestBundle`) shows the side keys' tip in every session of the run,
 whatever the device's tip store says, except in an `ANDARIUM_HOLD_SECONDS`
-harness launch, which hides it.
+harness launch, which hides it. `AndariumPreviewUITests` drives `AndariumPreview`
+in the Simulator (`xcodebuild test -scheme AndariumPreview`): every screen passes
+the accessibility audit for element descriptions and traits, and TalkBack's
+switch in the session's Settings and a first start under VoiceOver work as a
+person reaches them.
 
 The opt-in suites each need a `TEST_RUNNER_ANDARIUM_*` switch that the suite's
 header names: rotation, motion compatibility, power-off and over-vsock,
