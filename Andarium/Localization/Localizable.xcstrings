@@ -8562,6 +8562,29 @@
         }
       }
     },
+    "Side keys opacity when idle" : {
+      "comment" : "Slider: how visible the closed side keys stay once they have not been touched for a few seconds, as a percentage.",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未使用時のサイドキーの不透明度"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "闲置时侧边按键的不透明度"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "閒置時側邊按鍵的不透明度"
+          }
+        }
+      }
+    },
     "Size" : {
       "localizations" : {
         "ja" : {

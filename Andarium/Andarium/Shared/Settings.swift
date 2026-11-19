@@ -35,6 +35,7 @@ struct SessionSettingsSheet: View {
                     if offersInstall { apps }
                     if normalSession, model.capabilities.guestFiles, model.fileBrowser != nil { files }
                     if model.capabilities.statistics { stats(session) }
+                    sideKeys
                     // The thermal session runs in a normal run; Recovery has no HAL.
                     if normalSession { PerformanceSection() }
                     if model.host.supportsPointer { pointer }
@@ -447,6 +448,36 @@ struct SessionSettingsSheet: View {
         }
     }
     #endif
+
+    // MARK: Side keys
+
+    /// How far the closed side keys fade once left alone, out of sight at 0
+    /// (`SideKeysOverlay`).
+    private var sideKeys: some View {
+        Section {
+            VStack(alignment: .leading, spacing: 6) {
+                LabeledContent {
+                    value(Self.percent(model.sideKeysIdleOpacity))
+                } label: {
+                    rowLabel("Side keys opacity when idle", symbol: "capsule.portrait")
+                }
+                Slider(
+                    value: Binding(
+                        get: { model.sideKeysIdleOpacity },
+                        set: { model.sideKeysIdleOpacity = SideKeysPreference.clampedIdleOpacity($0) }),
+                    in: SideKeysPreference.minimumIdleOpacity...1,
+                    step: SideKeysPreference.idleOpacityStep
+                )
+                .accessibilityLabel("Side keys opacity when idle")
+                .accessibilityValue(Self.percent(model.sideKeysIdleOpacity))
+                .accessibilityIdentifier("sideKeysIdleOpacity")
+            }
+        }
+    }
+
+    private static func percent(_ opacity: Double) -> String {
+        opacity.formatted(.percent.precision(.fractionLength(0)))
+    }
 
     // MARK: Stats
 

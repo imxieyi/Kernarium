@@ -32,6 +32,8 @@ final class PreferenceKeeper {
         if let options = model.displayOptionsToKeep { DisplayOptionsStore.save(options, to: defaults) }
         if let on = model.showStatsToKeep { StatsPreference(defaults: defaults).keep(on) }
         if let on = model.pointerAsTouchToKeep { PointerPreference(defaults: defaults).keep(on) }
+        let keys = SideKeysPreference(defaults: defaults)
+        if keys.idleOpacity != model.sideKeysIdleOpacity { keys.keep(model.sideKeysIdleOpacity) }
         if let on = model.heatLimitToKeep { HeatLimitPreference(defaults: defaults).keep(on) }
         #if !APP_STORE
         if let on = model.jitToKeep { JitPreference(defaults: defaults).keep(on) }
@@ -41,6 +43,7 @@ final class PreferenceKeeper {
     private func observe() {
         guard let model else { return }
         withObservationTracking {
+            _ = model.sideKeysIdleOpacity
             _ = (model.displayOptionsToKeep, model.showStatsToKeep, model.pointerAsTouchToKeep, model.heatLimitToKeep)
             #if !APP_STORE
             _ = model.jitToKeep

@@ -60,7 +60,24 @@ struct SideKeysOverlay: View {
     /// tip wants to show.
     @State private var tipShown = false
     @Environment(AppModel.self) private var model: AppModel?
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOver
     @AccessibilityFocusState private var focus: SideKeyFocus?
+    /// The closed keys have been left alone long enough to fade to Settings'
+    /// "Side keys opacity when idle".
+    @State private var idle = false
+    /// Counts the touches on the closed keys; each one starts the wait again.
+    @State private var wake = 0
+
+    /// How long the closed keys stay fully opaque after they appear or are
+    /// touched.
+    static let idleDelay: Duration = .seconds(3)
+
+    /// The closed keys' opacity now: faded while idle, never while VoiceOver
+    /// is on or the tip points at them.
+    private var closedOpacity: Double {
+        guard idle, !voiceOver, !tipShown else { return 1 }
+        return model?.sideKeysIdleOpacity ?? 1
+    }
 
     /// A sheet the application keeps over the screens is up (Send feedback,
     /// opened from the boot screen's notice): the tip waits, because a popover
@@ -146,7 +163,13 @@ struct SideKeysOverlay: View {
                 }
                 .position(x: edgeX + inward * (KeyMetrics.edgeGap + groupWidth / 2), y: openY)
             } else {
-                ClosedKeys(space: keysSpace, leading: leading)
+                ClosedKeys(space: keysSpace, leading: leading, opacity: closedOpacity)
+                    .task(id: wake) {
+                        idle = false
+                        try? await Task.sleep(for: Self.idleDelay)
+                        guard !Task.isCancelled else { return }
+                        withAnimation(.easeOut(duration: 0.6)) { idle = true }
+                    }
                     // SwiftUI's own popover, not `popoverTip`: TipKit leaves
                     // its popover on screen when the keys it points at go
                     // away (opening, or the session ending), over the open
@@ -234,6 +257,7 @@ struct SideKeysOverlay: View {
     private func dragKeys(size: CGSize) -> some Gesture {
         DragGesture(minimumDistance: 6, coordinateSpace: .local)
             .onChanged { value in
+                if idle { withAnimation(.easeOut(duration: 0.15)) { idle = false } }
                 if dragStart == nil {
                     dragStart = CGPoint(x: leading ? 0 : size.width, y: size.height * fraction)
                 }
@@ -250,6 +274,7 @@ struct SideKeysOverlay: View {
                     withAnimation(.snappy) { leading = true }
                 }
                 dragStart = nil
+                wake += 1
             }
     }
 
@@ -285,6 +310,10 @@ enum KeyMetrics {
 struct ClosedKeys: View {
     let space: Namespace.ID
     let leading: Bool
+    /// How much of the keys shows ("Side keys opacity when idle"). Only what
+    /// is drawn fades: a view at no opacity takes no touches, and the keys
+    /// must still open and move where they are when out of sight.
+    var opacity: Double = 1
 
     var body: some View {
         VStack(spacing: 6) {
@@ -293,6 +322,7 @@ struct ClosedKeys: View {
             key(height: 58)
                 .matchedGeometryEffect(id: "rocker", in: space)
         }
+        .opacity(opacity)
         .padding(leading ? .leading : .trailing, 3)
         .frame(width: 36, height: 124, alignment: leading ? .leading : .trailing)
         .contentShape(Rectangle())

@@ -937,6 +937,12 @@ requires reopening Andarium.
   keys take touches: while they are open, a touch that begins anywhere else
   reaches Android from its first event and closes the keys
   (`SessionState.closeSideKeys`, called by the display's `touchDidBegin`).
+  The closed keys fade to Settings' "Side keys opacity when idle" (0 to 100
+  percent, 60 percent for a fresh install, kept as `SideKeysPreference`) three
+  seconds after they appear or are last dragged, and are opaque again from
+  the first touch of a drag; they never fade while VoiceOver is on or their
+  tip shows. Only what they draw fades, so out of sight at 0 percent they
+  still open and move where they are.
   Beside the closed keys their tip, while it shows, takes touches on its card
   alone (on a Mac, where an iPad app's popover keeps its dimming view, every
   touch), and it goes with the closed keys when they open or the session ends.

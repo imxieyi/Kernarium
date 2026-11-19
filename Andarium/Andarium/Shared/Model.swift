@@ -559,6 +559,9 @@ final class AppModel {
     /// What is kept of the setting across launches; nil where the launch
     /// decided it.
     var pointerAsTouchToKeep: Bool? { pointerAsTouchDecidedByLaunch ? nil : pointerAsTouch }
+    /// Settings' "Side keys opacity when idle": the closed keys' opacity once
+    /// left alone, from 0 to 1. Kept for the install (`SideKeysPreference`).
+    var sideKeysIdleOpacity = SideKeysPreference.defaultIdleOpacity
     /// Settings is open over the session. A sheet has the keys, so the guest
     /// does not hold the keyboard focus meanwhile.
     var sessionSettingsOpen = false
