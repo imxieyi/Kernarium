@@ -774,6 +774,34 @@ void test_native_guest_memory_trial_leaves_the_window_whole()
 		"the refused trial left a mapping behind");
 }
 
+/* A window the host places takes the host page at or below its geometry's
+ * start, which on a device is only guest-page aligned: Darwin rounds a hint up
+ * to the host page, so a hint of the start itself is never what it answers. */
+void test_placed_window_takes_the_host_page_at_its_start()
+{
+	constexpr std::uint64_t gib = 1024ULL * 1024ULL * 1024ULL;
+	const auto host_page = static_cast<std::uintptr_t>(getpagesize());
+	/* At the top of the test band, clear of the process's window that the
+	 * tests above hold from its start. */
+	constexpr std::uintptr_t band_top =
+		uml::testing::native_test_window_end - 4U * gib;
+	using Macos = uml::runtime::MacosNativeKernelGeometry;
+	const auto geometry =
+		Macos::derive_at(gib, band_top + DARWIN_UML_GUEST_PAGE_SIZE);
+	require(geometry.valid, "the guest-page aligned window did not derive");
+	const std::size_t length = geometry.window_end - geometry.window_start;
+	const std::uintptr_t expected = geometry.window_start & ~(host_page - 1U);
+	const auto window = uml::runtime::reserve_native_kernel_window(geometry,
+		uml::runtime::WindowPlacement::anywhere);
+	require(window.valid && window.reserved &&
+		window.window_start == expected &&
+		window.window_end == expected + length &&
+		window.load_bias == expected - DARWIN_UML_NATIVE_LINK_ADDRESS,
+		"a placed window did not take the host page at its start");
+	munmap(reinterpret_cast<void *>(window.window_start),
+		(length + host_page - 1U) & ~(host_page - 1U));
+}
+
 void test_guest_cpu_count_matches_kernel_policy()
 {
 	const auto online = sysconf(_SC_NPROCESSORS_ONLN);
@@ -945,6 +973,7 @@ int main()
 		test_scalable_native_kernel_layout_geometry();
 		test_process_native_window_is_one_reservation();
 		test_native_guest_memory_trial_leaves_the_window_whole();
+		test_placed_window_takes_the_host_page_at_its_start();
 		test_guest_cpu_count_matches_kernel_policy();
 		test_application_default_cpu_count_is_the_physical_cores_at_most_eight();
 		test_launch_guest_cpu_count_is_the_count_the_launch_boots_with();

@@ -322,6 +322,11 @@ NativeKernelLayout reserve_native_kernel_window(
 	 * this size fits instead of being told. A macOS kernel is built for its
 	 * address and gets no other.
 	 *
+	 * A window the host places is hinted at the host page at or below that
+	 * address, which keeps it inside the envelope: a device geometry starts
+	 * on a guest page, and Darwin rounds a hint up to the host page, so the
+	 * address itself is never what the host answers.
+	 *
 	 * Nothing inside the window is released while it lives, not even for
 	 * the kernel image: Darwin prefers a freshly freed range for its next
 	 * unhinted allocation, and a host allocation that landed there would be
@@ -329,11 +334,14 @@ NativeKernelLayout reserve_native_kernel_window(
 	 * told. The loader and guest RAM map over the reservation in place.
 	 */
 	const std::size_t reservation = host_reservation_length(length);
-	void *reserved = mmap(reinterpret_cast<void *>(geometry.window_start),
-		reservation, PROT_NONE, MAP_PRIVATE | MAP_ANON | MAP_NORESERVE, -1,
-		0);
+	const auto host_page = static_cast<std::uintptr_t>(getpagesize());
+	const std::uintptr_t hint = placement == WindowPlacement::exact ?
+		geometry.window_start :
+		geometry.window_start & ~(host_page - 1U);
+	void *reserved = mmap(reinterpret_cast<void *>(hint), reservation,
+		PROT_NONE, MAP_PRIVATE | MAP_ANON | MAP_NORESERVE, -1, 0);
 	if (reserved != MAP_FAILED &&
-	    reinterpret_cast<std::uintptr_t>(reserved) != geometry.window_start) {
+	    reinterpret_cast<std::uintptr_t>(reserved) != hint) {
 		munmap(reserved, reservation);
 		reserved = placement == WindowPlacement::exact ? MAP_FAILED :
 			mmap(nullptr, reservation, PROT_NONE,
