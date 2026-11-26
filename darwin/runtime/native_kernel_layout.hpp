@@ -120,8 +120,8 @@ enum class WindowPlacement : std::uint8_t {
 	/* The geometry's address or nothing: a macOS process, whose address space
 	 * is the host's to place a kernel built for it in. */
 	exact,
-	/* The geometry's address when the host still offers it, else wherever
-	 * the host has room: a physical iOS device. */
+	/* The host page at or below the geometry's address when the host still
+	 * offers it, else wherever the host has room: a physical iOS device. */
 	anywhere,
 };
 
